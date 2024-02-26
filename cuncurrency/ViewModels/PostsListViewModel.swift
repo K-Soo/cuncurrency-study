@@ -13,6 +13,7 @@ class PostsListViewModel: ObservableObject {
   @Published var isLoading = false
   @Published var showAlert = false
   @Published var errorMessage: String?
+//ghi
 
   var userId: Int?
 
