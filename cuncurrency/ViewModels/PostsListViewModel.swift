@@ -7,6 +7,7 @@
 
 import Foundation
 
+
 class PostsListViewModel: ObservableObject {
   @Published var posts: [Post] = []
   @Published var isLoading = false
