@@ -23,7 +23,7 @@ class PostsListViewModel: ObservableObject {
       self.isLoading = true
 
 
-      DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+
 
         apiService.getJSON { (result: Result<[Post], APIError>) in
           defer {
@@ -45,7 +45,7 @@ class PostsListViewModel: ObservableObject {
             }
           }
         }
-      }
+
     }
   }
 }
