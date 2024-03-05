@@ -10,48 +10,30 @@ import Foundation
 
 struct APIService {
   let urlString: String
-//  let deviceValue: Device
 
   func getJSON<T: Decodable>(dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate,
-                             keyDecodingStrategy:JSONDecoder.KeyDecodingStrategy = .useDefaultKeys,
-                             completion: @escaping (Result<T, APIError>) -> Void) {
+                             keyDecodingStrategy:JSONDecoder.KeyDecodingStrategy = .useDefaultKeys) async throws -> T {
     guard let url = URL(string: urlString) else {
-      completion(.failure(.invalidURL))
-      return
+      throw APIError.invalidURL
     }
 
-    URLSession.shared.dataTask(with: url) { data, response, error in
+    do {
+      let (data, response) = try await URLSession.shared.data(from: url)
       guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-
-        completion(.failure(.invalidResponseStatus(error!.localizedDescription)))
-        return
+        throw APIError.invalidResponseStatus("response status error")
       }
-      guard error == nil else {
-        completion(.failure(.dataTaskError(error!.localizedDescription)))
-        return
-      }
-      guard let data = data else {
-        completion(.failure(.corruptData))
-        return
-      }
-
       let decoder = JSONDecoder()
-
+      decoder.dateDecodingStrategy = dateDecodingStrategy
+      decoder.keyDecodingStrategy = keyDecodingStrategy
       do {
-        //            if let json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers),
-        //               let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-        //              print(String(decoding: jsonData, as: UTF8.self))
-        //            }
-
         let decodedData = try decoder.decode(T.self, from: data)
-        decoder.dateDecodingStrategy = dateDecodingStrategy
-        decoder.keyDecodingStrategy = keyDecodingStrategy
-        completion(.success(decodedData))
+        return decodedData
       } catch {
-        completion(.failure(.decodingError(error.localizedDescription)))
+        throw APIError.decodingError(error.localizedDescription)
       }
+    } catch {
+      throw APIError.dataTaskError(error.localizedDescription)
     }
-    .resume()
   }
 }
 
@@ -63,7 +45,7 @@ enum APIError: Error, LocalizedError {
   case dataTaskError(String)
   case corruptData
   case decodingError(String)
-  
+
   var errorDescription: String? {
     switch self {
     case .invalidURL:

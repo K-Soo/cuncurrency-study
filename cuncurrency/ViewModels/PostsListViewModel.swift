@@ -13,40 +13,53 @@ class PostsListViewModel: ObservableObject {
   @Published var isLoading = false
   @Published var showAlert = false
   @Published var errorMessage: String?
-//ghi
-
   var userId: Int?
 
-  func fetchPosts() {
+  @MainActor
+  func fetchPosts() async {
     if let userId = userId {
       let apiService = APIService(urlString: "https://jsonplaceholder.typicode.com/users/\(userId)/posts")
-      self.isLoading = true
-
-
-
-
-        apiService.getJSON { (result: Result<[Post], APIError>) in
-          defer {
-            DispatchQueue.main.async {
-              self.isLoading = false
-            }
-          }
-          switch result {
-          case .success(let post):
-            DispatchQueue.main.async {
-              self.posts = post
-            }
-          case .failure(let error):
-
-            DispatchQueue.main.async {
-              print(error)
-              self.showAlert = true
-              self.errorMessage = error.localizedDescription + "\nPlease contact the developer and provide this error and the steps to reproduce."
-            }
-          }
-        }
-
+      isLoading.toggle()
+      defer {
+        isLoading.toggle()
+      }
+      do {
+        posts = try await apiService.getJSON()
+      } catch {
+        showAlert = true
+        errorMessage = error.localizedDescription + "\nPlease contact the developer and provide this error and the steps to reproduce."
+      }
     }
+
+//    if let userId = userId {
+//      let apiService = APIService(urlString: "https://jsonplaceholder.typicode.com/users/\(userId)/posts")
+//      self.isLoading = true
+//
+//
+//      DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+//
+//        apiService.getJSON { (result: Result<[Post], APIError>) in
+//          defer {
+//            DispatchQueue.main.async {
+//              self.isLoading = false
+//            }
+//          }
+//          switch result {
+//          case .success(let post):
+//            DispatchQueue.main.async {
+//              self.posts = post
+//            }
+//          case .failure(let error):
+//
+//            DispatchQueue.main.async {
+//              print(error)
+//              self.showAlert = true
+//              self.errorMessage = error.localizedDescription + "\nPlease contact the developer and provide this error and the steps to reproduce."
+//            }
+//          }
+//        }
+//      }
+//    }
   }
 }
 
